@@ -1,6 +1,5 @@
 from pathlib import Path
 import turtle
-from pprint import pprint
 
 # Import des données du fichier CONFIGS
 from config.CONFIGS import *
@@ -134,7 +133,7 @@ class DisplayOnScreen(turtle.Turtle):
         self.goto(start_position)  # Déplacer la tortue au point de départ
         self.write(message, font=DisplayOnScreen.BASIC_FONT)  # Afficher le message de démarrage
 
-    def write_message(self, message: str, font: tuple = BASIC_FONT) -> None:
+    def write_message(self, message: str, text_color: str = "black", font: tuple = BASIC_FONT) -> None:
         """Affiche le message donné en argument selon la police choisie.
 
         Args:
@@ -144,6 +143,7 @@ class DisplayOnScreen(turtle.Turtle):
         Returns: None
         """
         self.clear()  # Effacer les messages précédents
+        self.color(text_color)
         self.write(message, font=font)  # Écrire le message
 
 
@@ -392,39 +392,47 @@ class Hero(turtle.Turtle):
         return self.game_window.textinput("Question", self.dict_questions[door_coord][0])
 
     def door_opening(self, door_coord: tuple[int, int], last_position: list[int, int]) -> None:
-        print(f"door_opening position: tuple{self.tuple_cur_position} ; list{self.cur_position} ; door_coord{door_coord} ; last_position{last_position}")
-        self.message.write_message(MESSAGES["closed door"])
-        answer = self.ask_question(door_coord)
-        if self.is_correct(door_coord, answer):
-            self.message.write_message(MESSAGES["opened door"])
-            self.clear_map_element(door_coord)
-            del self.dict_questions[door_coord]
-            self.goto(MAP_COORDS[door_coord][1])
+        """Gère l'ouverture des portes. Récupère la réponse du joueur aux questions.
+        Si la réponse est juste, ouvre la porte. Sinon la porte reste fermée.
+        Affiche les messages correspondants indiquant le statut de la porte en fonction
+        des réponses données.
+
+        Args:
+            door_coord (tuple): coordonnées de la porte
+            last_position (list): position du joueur devant la porte
+
+        Returns: None
+        """
+        self.message.write_message(MESSAGES["closed door"], text_color="red")  # Indique que la porte est fermée
+        answer = self.ask_question(door_coord)  # Pose la question correspondante et enregistre la réponse du joueur
+        # Si la réponse est juste
+        if answer == self.dict_questions[door_coord][1]:
+            # Indiquer que la porte est ouverte
+            self.message.write_message(MESSAGES["opened door"], text_color="green")
+            self.clear_map_element(door_coord)  # Effacer la porte du plan du château
+            del self.dict_questions[door_coord]  # Supprimer la question du dictionnaire des questions
+            self.goto(MAP_COORDS[door_coord][1])  # Le héros se déplace sur l'emplacement de la porte
             self.shadow.stamp()
             self.shadow.goto(MAP_COORDS[door_coord][1])
-            pprint(self.dict_questions)
         else:
-            print(f"door_opening wrong answer position: tuple{self.tuple_cur_position} ; list{self.cur_position} ; door_coord{door_coord} ; last_position{last_position}")
-            self.message.write_message(MESSAGES["wrong"])
-            self.cur_position = last_position
-            print(f"door_opening wrong answer last position: tuple{self.tuple_cur_position} ; list{self.cur_position} ; door_coord{door_coord} ; last_position{last_position}")
+            # Sinon indiquer que la réponse est fausse
+            self.message.write_message(MESSAGES["wrong"], text_color="red")
+            self.cur_position = last_position  # Le héros reprend sa position d'origine en restant bloqué devant la porte
 
-        self.game_window.listen()
-
-    def is_correct(self, door_coord, answer):
-        return answer == self.dict_questions[door_coord][1]
+        self.game_window.listen()  # Continuer à récupérer les entrées clavier
 
 
 class Game:
     def __init__(self):
-        # super().__init__()
+        self.screen = turtle.Screen()
+        self.screen.setup(width=1000, height=750)
         self.castle = Castle()
         self.castle.draw_map()
         self.hero = Hero(self.castle)
 
     def main_loop(self):
         self.hero.move_to()
-        self.hero.game_window.mainloop()
+        self.screen.mainloop()
 
     def __call__(self) -> None:
         self.main_loop()
@@ -432,14 +440,6 @@ class Game:
 
 if __name__ == '__main__':
     Game()()
-    # castle = Castle()
-    # castle.draw_map()
-    #
-    # hero = Hero(castle)
-    # # pprint(hero.dict_objects)
-    # # pprint(hero.dict_questions)
-    # hero.move_to()
-    #
-    # turtle.mainloop()
+
 
 
