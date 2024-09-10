@@ -138,12 +138,13 @@ class DisplayOnScreen(turtle.Turtle):
 
         Args:
         message (str): message à afficher
+        text_color (str): couleur du texte
         font (tuple): format de la police d'écriture
 
         Returns: None
         """
         self.clear()  # Effacer les messages précédents
-        self.color(text_color)
+        self.color(text_color)  # Changer la couleur du texte
         self.write(message, font=font)  # Écrire le message
 
 
@@ -165,15 +166,11 @@ class Hero(turtle.Turtle):
         self.shapesize(RATIO_PERSONNAGE * GRID_SHAPESIZE)  # Taille de la tortue
         self.penup()  # La tortue ne dessine pas
         self.speed(0)  # Vitesse de déplacement le plus rapide possible
-        self.castle_turtle = castle_turtle  # Récupération de la tortue créée à partir de la classe Castle
 
         # Création d'une tortue 'shadow' représentant l'ombre du héros qui affichera les cases déjà vues
-        self.shadow = turtle.Turtle()  # Initialisation de la tortue
-        self.shadow.hideturtle()  # Cacher la tortue au démarrage
-        self.shadow.penup()  # La tortue ne dessine pas
+        # Et modifier les éléments de la carte
+        self.shadow = castle_turtle  # Récupération de la tortue créée à partir de la classe Castle
         self.shadow.color(COULEUR_CASES, COULEUR_VUE)  # Couleur de la tortue, beige
-        self.shadow.shape("square")  # Forme de la tortue, carré
-        self.shadow.shapesize(GRID_SHAPESIZE)  # Taille de la tortue = taille d'une case
         self.cur_position = list(self.starting_position())  # Liste contenant les coordonnées de la position actuelle de la tortue
 
         # Dict contenant en clés les coordonnées des objets se trouvant dans la grille avec leur description comme valeurs
@@ -193,7 +190,7 @@ class Hero(turtle.Turtle):
 
     @property
     def tuple_cur_position(self):
-        """Convertit la position actuelle (self.cur_position) en tuple.
+        """Convertit l'attribut de class correspondant à la position actuelle (self.cur_position) en tuple.
 
         Returns: un tuple
         """
@@ -233,101 +230,77 @@ class Hero(turtle.Turtle):
             return True
         return False
 
-    def go_up(self):
-        print(f"last position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-        cur_position = list(self.tuple_cur_position)
-        print(f"current position: {cur_position}")
-        self.cur_position[0] -= 1
-        print(f"current position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-        if self.cant_move():
-            print(f"cant move position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-            self.cur_position[0] += 1
-            print(f"cant move after position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-        elif self.tuple_cur_position in self.dict_questions:
-            self.door_opening(self.tuple_cur_position, cur_position)
-        else:
-            # print(self.cant_move())
-            y = self.ycor()
-            self.sety(y + SQUARE_SIDE_LEN)
-            self.shadow.stamp()
-            self.shadow.sety(y + SQUARE_SIDE_LEN)
-            self.clear_map_element(self.tuple_cur_position)
-            self.get_object(self.tuple_cur_position)
+    def on_my_way(self, new_position):
+        self.goto(MAP_COORDS[new_position][1])
+        self.shadow.stamp()  # L'ombre du héros colore la case d'où vient le héros avant déplacement
+        self.shadow.goto(MAP_COORDS[new_position][1])  # L'ombre suit le héros à sa nouvelle position
+        # Si un objet est présent sur la nouvelle position, l'effacer
+        # Vérifier si le héros a atteint la sortie
         if self.which_element() == GOAL:
+            # Afficher un message de victoire
             self.message.write_message(MESSAGES["win"], font=DisplayOnScreen.WINNING_FONT)
-        # print(self.cur_position)
+        else:
+            self.clear_map_element(new_position)
+            self.get_object(new_position)  # Puis le ramasser
 
-    def go_down(self):
-        print(f"last position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-        cur_position = list(self.tuple_cur_position)
-        print(f"current position: {cur_position}")
-        self.cur_position[0] += 1
-        print(f"current position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
+    def what_happens(self, last_position: list[int, int], new_position: tuple[int, int]) -> None:
         if self.cant_move():
-            print(f"cant move position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-            self.cur_position[0] -= 1
-            print(f"cant move after position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-        elif self.tuple_cur_position in self.dict_questions:
-            self.door_opening(self.tuple_cur_position, cur_position)
+            self.cur_position = last_position  # Dans ce cas, on revient à la position avant déplacement
+        # Vérifier si la nouvelle position après déplacement correspond à une porte
+        elif new_position in self.dict_questions:
+            # Lancer les actions relatives à l'ouverture de porte
+            self.door_opening(new_position, last_position)
+        # Sinon déplacer le héros à sa nouvelle position
         else:
-            # print(self.cant_move())
-            y = self.ycor()
-            self.sety(y - SQUARE_SIDE_LEN)
-            self.shadow.stamp()
-            self.shadow.sety(y - SQUARE_SIDE_LEN)
-            self.clear_map_element(self.tuple_cur_position)
-            self.get_object(self.tuple_cur_position)
-        if self.which_element() == GOAL:
-            self.message.write_message(MESSAGES["win"], font=DisplayOnScreen.WINNING_FONT)
-        # print(self.cur_position)
+            self.on_my_way(new_position)
 
-    def go_left(self):
-        print(f"last position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-        cur_position = list(self.tuple_cur_position)
-        print(f"current position: {cur_position}")
-        self.cur_position[1] -= 1
-        print(f"current position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-        if self.cant_move():
-            print(f"cant move position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-            self.cur_position[1] += 1
-            print(f"cant move after position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-        elif self.tuple_cur_position in self.dict_questions:
-            self.door_opening(self.tuple_cur_position, cur_position)
-        else:
-            # print(self.cant_move())
-            x = self.xcor()
-            self.setx(x - SQUARE_SIDE_LEN)
-            self.shadow.stamp()
-            self.shadow.setx(x - SQUARE_SIDE_LEN)
-            self.clear_map_element(self.tuple_cur_position)
-            self.get_object(self.tuple_cur_position)
-        if self.which_element() == GOAL:
-            self.message.write_message(MESSAGES["win"], font=DisplayOnScreen.WINNING_FONT)
-        # print(self.cur_position)
+    def go_up(self) -> None:
+        """Permet de déplacer le héros d'une case vers le haut.
+        Gère tous les évènements possibles qui découlent de ce déplacement.
 
-    def go_right(self):
-        print(f"last position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-        cur_position = list(self.tuple_cur_position)
-        print(f"current position: {cur_position}")
-        self.cur_position[1] += 1
-        print(f"current position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-        if self.cant_move():
-            print(f"cant move position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-            self.cur_position[1] -= 1
-            print(f"cant move after position: tuple{self.tuple_cur_position} ; list{self.cur_position}")
-        elif self.tuple_cur_position in self.dict_questions:
-            self.door_opening(self.tuple_cur_position, cur_position)
-        else:
-            # print(self.cant_move())
-            x = self.xcor()
-            self.setx(x + SQUARE_SIDE_LEN)
-            self.shadow.stamp()
-            self.shadow.setx(x + SQUARE_SIDE_LEN)
-            self.clear_map_element(self.tuple_cur_position)
-            self.get_object(self.tuple_cur_position)
-        if self.which_element() == GOAL:
-            self.message.write_message(MESSAGES["win"], font=DisplayOnScreen.WINNING_FONT)
-        # print(self.cur_position)
+        Returns: None
+        """
+        # Enregistrer la position avant déplacement au cas où le héros serait bloqué
+        last_position = list(self.tuple_cur_position)
+        self.cur_position[0] -= 1  # Déplacer la coordonnée correspondant aux lignes du plan de 1 vers le haut(= -1)
+        # Définir quelle action va se passer en fonction de la nouvelle position du héros
+        self.what_happens(last_position, self.tuple_cur_position)
+
+    def go_down(self) -> None:
+        """Permet de déplacer le héros d'une case vers le bas.
+        Gère tous les évènements possibles qui découlent de ce déplacement.
+
+        Returns: None
+        """
+        # Enregistrer la position avant déplacement au cas où le héros serait bloqué
+        last_position = list(self.tuple_cur_position)
+        self.cur_position[0] += 1  # Déplacer la coordonnée correspondant aux lignes du plan de 1 vers le bas(= +1)
+        # Définir quelle action va se passer en fonction de la nouvelle position du héros
+        self.what_happens(last_position, self.tuple_cur_position)
+
+    def go_left(self) -> None:
+        """Permet de déplacer le héros d'une case vers la gauche.
+        Gère tous les évènements possibles qui découlent de ce déplacement.
+
+        Returns: None
+        """
+        # Enregistrer la position avant déplacement au cas où le héros serait bloqué
+        last_position = list(self.tuple_cur_position)
+        self.cur_position[1] -= 1  # Déplacer la coordonnée correspondant aux colonnes du plan de 1 vers la gauche(= -1)
+        # Définir quelle action va se passer en fonction de la nouvelle position du héros
+        self.what_happens(last_position, self.tuple_cur_position)
+
+    def go_right(self) -> None:
+        """Permet de déplacer le héros d'une case vers la droite.
+        Gère tous les évènements possibles qui découlent de ce déplacement.
+
+        Returns: None
+        """
+        # Enregistrer la position avant déplacement au cas où le héros serait bloqué
+        last_position = list(self.tuple_cur_position)
+        self.cur_position[1] += 1  # Déplacer la coordonnée correspondant aux colonnes du plan de 1 vers la droite(= +1)
+        # Définir quelle action va se passer en fonction de la nouvelle position du héros
+        self.what_happens(last_position, self.tuple_cur_position)
 
     def move_to(self) -> None:
         """Permet de déplacer le héros avec les flèches du clavier.
@@ -350,22 +323,39 @@ class Hero(turtle.Turtle):
         return MAP_COORDS[self.tuple_cur_position][0]
 
     def clear_map_element(self, stamp_position: tuple[int, int]) -> None:
-        element = self.which_element()
-        if element in self.castle_turtle.stampids:
+        """Permet d'effacer un élément du plan du château.
+
+        Args:
+            stamp_position (tuple): coordonnées du tampon utilisé pour dessiner l'objet sur le plan du château
+
+        Returns: None
+        """
+        element = self.which_element()  # Récupération du type d'élément
+        # Vérification si l'élément fait partie des tampons (stamps) enregistrés dans le dictionnaire des stampids
+        if element in self.shadow.stampids:
+            # Bloc try/except pour s'affranchir de l'erreur 'KeyError' si l'élément n'est pas dans le dictionnaire
             try:
-                self.castle_turtle.clearstamp(self.castle_turtle.stampids[element][stamp_position])
-                del self.castle_turtle.stampids[element][stamp_position]
+                # Effacer l'élément de la carte
+                self.shadow.clearstamp(self.shadow.stampids[element][stamp_position])
+                # Effacer l'élément du dictionnaire des stampids
+                del self.shadow.stampids[element][stamp_position]
             except KeyError:
                 pass
 
-            # pprint(self.castle_turtle.stampids)
-
     def get_object(self, object_coord: tuple[int, int]) -> None:
+        """Permet de ramasser un objet si le héros se déplace sur la même case que l'objet.
+        Ajoute et affiche l'objet dans l'inventaire.
+
+        Args:
+            object_coord (tuple): coordonnées de l'objet
+
+        Returns: None
+        """
+        # Vérification si un objet se situe à l'endroit où se trouve le héros
         if object_coord in self.dict_objects:
-            self.objects.append(self.dict_objects[object_coord])
-            self.display_object()
-            del self.dict_objects[object_coord]
-            # pprint(self.dict_objects)
+            self.objects.append(self.dict_objects[object_coord])  # Ajoute l'objet à la liste des objets
+            self.display_object()  # Affiche l'objet trouvé
+            del self.dict_objects[object_coord]  # Supprime l'objet du dict des objets.
 
     def display_object(self) -> None:
         """Permet d'afficher les objets ramassés dans l'inventaire
@@ -426,6 +416,7 @@ class Game:
     def __init__(self):
         self.screen = turtle.Screen()
         self.screen.setup(width=1000, height=750)
+        self.screen.bgcolor(COULEUR_EXTERIEUR)
         self.castle = Castle()
         self.castle.draw_map()
         self.hero = Hero(self.castle)
