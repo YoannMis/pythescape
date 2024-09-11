@@ -1,5 +1,7 @@
 from pathlib import Path
 import turtle
+from tkinter import *
+from tkinter import ttk
 
 # Import des données du fichier CONFIGS
 from config.CONFIGS import *
@@ -48,11 +50,22 @@ DOOR = 3  # Porte
 OBJECT = 4  # Objet
 
 # ---DICT DES DIFFÉRENTS MESSAGES DU JEU À AFFICHER---
-MESSAGES = {"win": "Bravo ! Vous avez gagné !",
+MESSAGES = {"rules": f"""Lancelot entre dans le château au sommet du Python des Neiges, muni de son précieux sac de rangement et de sa torche fraîchement allumée aux feux de Beltane. 
+Il doit trouver la statue de sainte Axerror, le chef-d’oeuvre de Gide de Rome, dit le « tyran malfaisant éternel ».
+
+Heureusement, pour l’aider dans sa quête, Merlin, son maître, lui a fourni un plan minutieux des salles et des couloirs du château. 
+Ce plan lui sera fort utile, vu l’énormité du bâtiment, tant par sa taille que par le nombre de ses pièces !
+
+Avant de partir, Merlin lui a donné la clef de la porte d’entrée du château et lui a prodigué moults conseils, 
+dont celui de bien garder tous les objets qu’il trouvera lors de sa quête : 
+ceux-ci lui permettront de répondre aux diverses énigmes que ne manqueront pas de poser les gardes postés devant les portes à l’intérieur du château.
+
+Merlin a affirmé à son disciple que, s’il procède avec intelligence, sa quête sera satisfaite.""",
+            "win": "Bravo ! Vous avez gagné !",
             "closed door": "Cette porte est fermée. Répondez à l'énigme posée par le garde pour l'ouvrir.",
             "opened door": "La porte s'ouvre !",
             "wrong": "Mauvaise réponse.",
-            "start": "Vous devez amener le Héro (point rouge) jusqu'à la sortie (case jaune).",
+            "start": "Vous devez amener le Héros (point rouge) jusqu'à la sortie (case jaune).",
             "object": "Vous avez trouvé un objet : ",
             "inventory": "INVENTAIRE :",
             }
@@ -60,8 +73,10 @@ MESSAGES = {"win": "Bravo ! Vous avez gagné !",
 # Dict contenant les coordonnées (sous forme de tuple) de chaque case de la grille représentant le château comme clés
 # Et un tuple (contenant le numéro correspondant à l'élément représenté par la case, les coordonnées en px Turtle de la case) comme valeurs
 MAP_COORDS = {}
-x_coord = ZONE_PLAN_MINI[0] + HALF_SQUARE  # coordonnée x en px Turtle du centre de la case en haut à gauche de la grille
-y_coord = ZONE_PLAN_MAXI[1] - HALF_SQUARE  # coordonnée y en px Turtle du centre de la case en haut à gauche de la grille
+x_coord = ZONE_PLAN_MINI[
+              0] + HALF_SQUARE  # coordonnée x en px Turtle du centre de la case en haut à gauche de la grille
+y_coord = ZONE_PLAN_MAXI[
+              1] - HALF_SQUARE  # coordonnée y en px Turtle du centre de la case en haut à gauche de la grille
 for x in range(ROWS):
     for y in range(COLUMNS):
         # MAP_COORDS = {(x, y): (n° représentant objet, (x en px Ttle, y en px Ttle))}
@@ -84,7 +99,7 @@ class Castle(turtle.Turtle):
         self.speed(0)  # Vitesse de déplacement le plus rapide possible
         self.stampids = {DOOR: {}, OBJECT: {}}  # Dict permettant de stocker les coordonnées des objets et portes
 
-    def store_stampid(self, stampid: int, coords: tuple, map_element: int) -> None:
+    def _store_stampid(self, stampid: int, coords: tuple, map_element: int) -> None:
         """Stocke dans le dict self.stampid les 'stamp-id' par leurs coordonnées des 'stamps'
         créés avec la méthode turtle.stamp() correspondants à ceux générés pour représenter
         les objets ou les portes sur le plan du château.
@@ -112,7 +127,7 @@ class Castle(turtle.Turtle):
             self.goto(MAP_COORDS[coords][1])
             stampid = self.stamp()  # Dessine l'élément à l'emplacement donné
             # Si l'élément est une porte ou un objet, enregistre cet élément avec ses coordonnées et son stamp-id.
-            self.store_stampid(stampid, coords, MAP_COORDS[coords][0])
+            self._store_stampid(stampid, coords, MAP_COORDS[coords][0])
 
 
 # Class DisplayOnScreen permettant d'afficher les différents messages et l'inventaire à l'écran
@@ -157,7 +172,7 @@ class Hero(turtle.Turtle):
             castle_turtle (Castle): objet Turtle créé avec la classe Castle
         """
         super().__init__()  # Héritage de la Class Turtle
-        self.game_window = turtle.Screen()  # Initier une fenêtre Turtle avec laquelle interagir
+        self._game_window = turtle.Screen()  # Initier une fenêtre Turtle avec laquelle interagir
 
         # Attributs de la tortue représentant le héros
         self.hideturtle()  # Cacher la tortue au démarrage du jeu
@@ -167,37 +182,38 @@ class Hero(turtle.Turtle):
         self.penup()  # La tortue ne dessine pas
         self.speed(0)  # Vitesse de déplacement le plus rapide possible
 
-        # Création d'une tortue 'shadow' représentant l'ombre du héros qui affichera les cases déjà vues
+        # Création d'une tortue '_shadow' représentant l'ombre du héros qui affichera les cases déjà vues
         # Et modifier les éléments de la carte
-        self.shadow = castle_turtle  # Récupération de la tortue créée à partir de la classe Castle
-        self.shadow.color(COULEUR_CASES, COULEUR_VUE)  # Couleur de la tortue, beige
-        self.cur_position = list(self.starting_position())  # Liste contenant les coordonnées de la position actuelle de la tortue
+        self._shadow = castle_turtle  # Récupération de la tortue créée à partir de la classe Castle
+        self._shadow.color(COULEUR_CASES, COULEUR_VUE)  # Couleur de la tortue, beige
+        self._cur_position = list(
+            self._starting_position())  # Liste contenant les coordonnées de la position actuelle de la tortue
 
         # Dict contenant en clés les coordonnées des objets se trouvant dans la grille avec leur description comme valeurs
-        self.dict_objects = Hero.into_dict(OBJECTS)
+        self._dict_objects = Hero._into_dict(OBJECTS)
         # Dict contenant en clés les coordonnées des portes se trouvant dans la grille
         # avec les questions auxquelles répondre comme valeurs
-        self.dict_questions = Hero.into_dict(QUESTIONS)
+        self._dict_questions = Hero._into_dict(QUESTIONS)
 
         # Création d'une tortue 'message' à partir de la classe DisplayOnScreen permettant d'afficher les messages
         # Avec un message de départ
-        self.message = DisplayOnScreen(POINT_AFFICHAGE_ANNONCES, MESSAGES["start"])
+        self._message = DisplayOnScreen(POINT_AFFICHAGE_ANNONCES, MESSAGES["start"])
 
         # Création d'une tortue 'inventory' à partir de la classe DisplayOnScreen permettant d'afficher l'inventaire
         # Avec un message de départ
-        self.inventory = DisplayOnScreen(POINT_AFFICHAGE_INVENTAIRE, MESSAGES["inventory"])
-        self.objects = []  # Liste des objects ramassés
+        self._inventory = DisplayOnScreen(POINT_AFFICHAGE_INVENTAIRE, MESSAGES["inventory"])
+        self._objects = []  # Liste des objects ramassés
 
     @property
-    def tuple_cur_position(self):
-        """Convertit l'attribut de class correspondant à la position actuelle (self.cur_position) en tuple.
+    def _tuple_cur_position(self):
+        """Convertit l'attribut de class correspondant à la position actuelle (self._cur_position) en tuple.
 
         Returns: un tuple
         """
-        return tuple(self.cur_position)
+        return tuple(self._cur_position)
 
     @staticmethod
-    def into_dict(text: str) -> dict:
+    def _into_dict(text: str) -> dict:
         """Converti un fichier txt en dictionnaire exploitable
         pour gérer les évènements du jeu en fonction de leur emplacement sur le plan du château.
 
@@ -209,120 +225,130 @@ class Hero(turtle.Turtle):
         """
         return eval(text)
 
-    def starting_position(self) -> tuple[int, int]:
+    @staticmethod
+    def _cant_move(last_position: list[int, int], new_position: tuple[int, int]) -> bool:
+        """Vérifie si le héros peut avancer.
+
+        Args:
+            last_position (list): Position du héros avant déplacement
+            new_position (tuple): Position du héros après déplacement
+
+        Returns: True si le héros ne peut pas avancer, False sinon
+        """
+        # Vérifier si le héros a déjà atteint la sortie ou s'il est hors de la carte ou encore s'il est sur un mur
+        if MAP_COORDS[tuple(last_position)][0] == GOAL or new_position not in MAP_COORDS or \
+                MAP_COORDS[new_position][0] == WALL:
+            return True
+        return False
+
+    def _starting_position(self) -> tuple[int, int]:
         """Déplace les tortues correspondant au héros et à son ombre à leur position de départ.
 
         Returns: les coordonnées de la position de départ
         """
         self.goto((MAP_COORDS[POSITION_DEPART][1]))
-        self.shadow.goto((MAP_COORDS[POSITION_DEPART][1]))
+        self._shadow.goto((MAP_COORDS[POSITION_DEPART][1]))
         self.showturtle()  # Rend visible la tortue du héros
         return POSITION_DEPART
 
-    def cant_move(self) -> bool:
-        """Vérifie si le héros peut avancer.
+    def _on_my_way(self, new_position: tuple[int, int]) -> None:
+        """Gère l'interaction du héros avec les objets qu'il rencontre sur son parcours
+        lors de ses déplacements sur le plan du château.
 
-        Returns: True si le héros ne peut pas avancer, False sinon
+        Args:
+            new_position (tuple): Position du héros après déplacement
+
+        Returns: None
         """
-        position = self.tuple_cur_position
-        # Vérifier si le héros est hors de la carte ou s'il est sur un mur
-        if position not in MAP_COORDS or MAP_COORDS[position][0] == WALL:
-            return True
-        return False
-
-    def on_my_way(self, new_position):
         self.goto(MAP_COORDS[new_position][1])
-        self.shadow.stamp()  # L'ombre du héros colore la case d'où vient le héros avant déplacement
-        self.shadow.goto(MAP_COORDS[new_position][1])  # L'ombre suit le héros à sa nouvelle position
+        self._shadow.stamp()  # L'ombre du héros colore la case d'où vient le héros avant déplacement
+        self._shadow.goto(MAP_COORDS[new_position][1])  # L'ombre suit le héros à sa nouvelle position
         # Si un objet est présent sur la nouvelle position, l'effacer
         # Vérifier si le héros a atteint la sortie
-        if self.which_element() == GOAL:
+        if self._which_element() == GOAL:
             # Afficher un message de victoire
-            self.message.write_message(MESSAGES["win"], font=DisplayOnScreen.WINNING_FONT)
+            self._message.write_message(MESSAGES["win"], font=DisplayOnScreen.WINNING_FONT)
         else:
-            self.clear_map_element(new_position)
-            self.get_object(new_position)  # Puis le ramasser
+            self._clear_map_element(new_position)
+            self._get_object(new_position)  # Puis le ramasser
 
-    def what_happens(self, last_position: list[int, int], new_position: tuple[int, int]) -> None:
-        if self.cant_move():
-            self.cur_position = last_position  # Dans ce cas, on revient à la position avant déplacement
+    def _what_happens(self, last_position: list[int, int], new_position: tuple[int, int]) -> None:
+        """Gère les différents évènements qui peuvent se produire lorsque le héros rencontre une porte.
+
+        Args:
+            last_position (list): Position du héros avant déplacement
+            new_position (tuple): Position du héros après déplacement
+
+        Returns: None
+        """
+        if self._cant_move(last_position, new_position):
+            self._cur_position = last_position  # Dans ce cas, on revient à la position avant déplacement
         # Vérifier si la nouvelle position après déplacement correspond à une porte
-        elif new_position in self.dict_questions:
+        elif new_position in self._dict_questions:
             # Lancer les actions relatives à l'ouverture de porte
-            self.door_opening(new_position, last_position)
+            self._door_opening(new_position, last_position)
         # Sinon déplacer le héros à sa nouvelle position
         else:
-            self.on_my_way(new_position)
+            self._on_my_way(new_position)
 
-    def go_up(self) -> None:
+    def _go_up(self) -> None:
         """Permet de déplacer le héros d'une case vers le haut.
         Gère tous les évènements possibles qui découlent de ce déplacement.
 
         Returns: None
         """
         # Enregistrer la position avant déplacement au cas où le héros serait bloqué
-        last_position = list(self.tuple_cur_position)
-        self.cur_position[0] -= 1  # Déplacer la coordonnée correspondant aux lignes du plan de 1 vers le haut(= -1)
+        last_position = list(self._tuple_cur_position)
+        self._cur_position[0] -= 1  # Déplacer la coordonnée correspondant aux lignes du plan de 1 vers le haut(= -1)
         # Définir quelle action va se passer en fonction de la nouvelle position du héros
-        self.what_happens(last_position, self.tuple_cur_position)
+        self._what_happens(last_position, self._tuple_cur_position)
 
-    def go_down(self) -> None:
+    def _go_down(self) -> None:
         """Permet de déplacer le héros d'une case vers le bas.
         Gère tous les évènements possibles qui découlent de ce déplacement.
 
         Returns: None
         """
         # Enregistrer la position avant déplacement au cas où le héros serait bloqué
-        last_position = list(self.tuple_cur_position)
-        self.cur_position[0] += 1  # Déplacer la coordonnée correspondant aux lignes du plan de 1 vers le bas(= +1)
+        last_position = list(self._tuple_cur_position)
+        self._cur_position[0] += 1  # Déplacer la coordonnée correspondant aux lignes du plan de 1 vers le bas(= +1)
         # Définir quelle action va se passer en fonction de la nouvelle position du héros
-        self.what_happens(last_position, self.tuple_cur_position)
+        self._what_happens(last_position, self._tuple_cur_position)
 
-    def go_left(self) -> None:
+    def _go_left(self) -> None:
         """Permet de déplacer le héros d'une case vers la gauche.
         Gère tous les évènements possibles qui découlent de ce déplacement.
 
         Returns: None
         """
         # Enregistrer la position avant déplacement au cas où le héros serait bloqué
-        last_position = list(self.tuple_cur_position)
-        self.cur_position[1] -= 1  # Déplacer la coordonnée correspondant aux colonnes du plan de 1 vers la gauche(= -1)
+        last_position = list(self._tuple_cur_position)
+        self._cur_position[
+            1] -= 1  # Déplacer la coordonnée correspondant aux colonnes du plan de 1 vers la gauche(= -1)
         # Définir quelle action va se passer en fonction de la nouvelle position du héros
-        self.what_happens(last_position, self.tuple_cur_position)
+        self._what_happens(last_position, self._tuple_cur_position)
 
-    def go_right(self) -> None:
+    def _go_right(self) -> None:
         """Permet de déplacer le héros d'une case vers la droite.
         Gère tous les évènements possibles qui découlent de ce déplacement.
 
         Returns: None
         """
         # Enregistrer la position avant déplacement au cas où le héros serait bloqué
-        last_position = list(self.tuple_cur_position)
-        self.cur_position[1] += 1  # Déplacer la coordonnée correspondant aux colonnes du plan de 1 vers la droite(= +1)
+        last_position = list(self._tuple_cur_position)
+        self._cur_position[
+            1] += 1  # Déplacer la coordonnée correspondant aux colonnes du plan de 1 vers la droite(= +1)
         # Définir quelle action va se passer en fonction de la nouvelle position du héros
-        self.what_happens(last_position, self.tuple_cur_position)
+        self._what_happens(last_position, self._tuple_cur_position)
 
-    def move_to(self) -> None:
-        """Permet de déplacer le héros avec les flèches du clavier.
-
-        Returns: None
-        """
-        self.game_window.onkeypress(self.go_up, "Up")  # Quand on appuie sur la flèche du haut, le perso monte.
-        self.game_window.onkeypress(self.go_down, "Down")  # Quand on appuie sur la flèche du bas, le perso descend.
-        self.game_window.onkeypress(self.go_left,
-                                    "Left")  # Quand on appuie sur la flèche de gauche, le perso va à gauche.
-        self.game_window.onkeypress(self.go_right,
-                                    "Right")  # Quand on appuie sur la flèche de droite, le perso va à droite.
-        self.game_window.listen()  # Récupère les entrées clavier
-
-    def which_element(self) -> int:
+    def _which_element(self) -> int:
         """Renvoie l'élément sur le plan du château correspondant à la position du héros.
 
         Returns: Valeur de l'élément
         """
-        return MAP_COORDS[self.tuple_cur_position][0]
+        return MAP_COORDS[self._tuple_cur_position][0]
 
-    def clear_map_element(self, stamp_position: tuple[int, int]) -> None:
+    def _clear_map_element(self, stamp_position: tuple[int, int]) -> None:
         """Permet d'effacer un élément du plan du château.
 
         Args:
@@ -330,19 +356,19 @@ class Hero(turtle.Turtle):
 
         Returns: None
         """
-        element = self.which_element()  # Récupération du type d'élément
+        element = self._which_element()  # Récupération du type d'élément
         # Vérification si l'élément fait partie des tampons (stamps) enregistrés dans le dictionnaire des stampids
-        if element in self.shadow.stampids:
+        if element in self._shadow.stampids:
             # Bloc try/except pour s'affranchir de l'erreur 'KeyError' si l'élément n'est pas dans le dictionnaire
             try:
                 # Effacer l'élément de la carte
-                self.shadow.clearstamp(self.shadow.stampids[element][stamp_position])
+                self._shadow.clearstamp(self._shadow.stampids[element][stamp_position])
                 # Effacer l'élément du dictionnaire des stampids
-                del self.shadow.stampids[element][stamp_position]
+                del self._shadow.stampids[element][stamp_position]
             except KeyError:
                 pass
 
-    def get_object(self, object_coord: tuple[int, int]) -> None:
+    def _get_object(self, object_coord: tuple[int, int]) -> None:
         """Permet de ramasser un objet si le héros se déplace sur la même case que l'objet.
         Ajoute et affiche l'objet dans l'inventaire.
 
@@ -352,24 +378,24 @@ class Hero(turtle.Turtle):
         Returns: None
         """
         # Vérification si un objet se situe à l'endroit où se trouve le héros
-        if object_coord in self.dict_objects:
-            self.objects.append(self.dict_objects[object_coord])  # Ajoute l'objet à la liste des objets
-            self.display_object()  # Affiche l'objet trouvé
-            del self.dict_objects[object_coord]  # Supprime l'objet du dict des objets.
+        if object_coord in self._dict_objects:
+            self._objects.append(self._dict_objects[object_coord])  # Ajoute l'objet à la liste des objets
+            self._display_object()  # Affiche l'objet trouvé
+            del self._dict_objects[object_coord]  # Supprime l'objet du dict des objets.
 
-    def display_object(self) -> None:
+    def _display_object(self) -> None:
         """Permet d'afficher les objets ramassés dans l'inventaire
         et d'afficher un message indiquant quel objet a été ramassé.
 
         Returns: None
         """
-        self.inventory.sety(self.inventory.ycor() - 30)  # Déplace la tortue de l'inventaire à la ligne suivante
+        self._inventory.sety(self._inventory.ycor() - 30)  # Déplace la tortue de l'inventaire à la ligne suivante
         # La tortue 'inventaire' affiche l'objet dans l'inventaire en incrémentant le N° d'objet ramassé.
-        self.inventory.write(f"N°{len(self.objects)} : {self.objects[-1]}", font=DisplayOnScreen.BASIC_FONT)
+        self._inventory.write(f"N°{len(self._objects)} : {self._objects[-1]}", font=DisplayOnScreen.BASIC_FONT)
         # La tortue 'message' affiche l'objet ramassé dans l'encadré des messages
-        self.message.write_message(f"{MESSAGES['object']}{self.objects[-1]}", font=DisplayOnScreen.BASIC_FONT)
+        self._message.write_message(f"{MESSAGES['object']}{self._objects[-1]}", font=DisplayOnScreen.BASIC_FONT)
 
-    def ask_question(self, door_coord: tuple[int, int]) -> str:
+    def _ask_question(self, door_coord: tuple[int, int]) -> str:
         """Permet d'afficher une fenêtre contextuelle permettant de poser la question
         qui servira à ouvrir la porte. Retourne ensuite la réponse à la question entrée
         par le joueur.
@@ -379,9 +405,9 @@ class Hero(turtle.Turtle):
 
         Returns (str): Retourne l'input du joueur
         """
-        return self.game_window.textinput("Question", self.dict_questions[door_coord][0])
+        return self._game_window.textinput("Question", self._dict_questions[door_coord][0])
 
-    def door_opening(self, door_coord: tuple[int, int], last_position: list[int, int]) -> None:
+    def _door_opening(self, door_coord: tuple[int, int], last_position: list[int, int]) -> None:
         """Gère l'ouverture des portes. Récupère la réponse du joueur aux questions.
         Si la réponse est juste, ouvre la porte. Sinon la porte reste fermée.
         Affiche les messages correspondants indiquant le statut de la porte en fonction
@@ -393,44 +419,104 @@ class Hero(turtle.Turtle):
 
         Returns: None
         """
-        self.message.write_message(MESSAGES["closed door"], text_color="red")  # Indique que la porte est fermée
-        answer = self.ask_question(door_coord)  # Pose la question correspondante et enregistre la réponse du joueur
+        self._message.write_message(MESSAGES["closed door"], text_color="red")  # Indique que la porte est fermée
+        answer = self._ask_question(door_coord)  # Pose la question correspondante et enregistre la réponse du joueur
         # Si la réponse est juste
-        if answer == self.dict_questions[door_coord][1]:
+        if answer == self._dict_questions[door_coord][1]:
             # Indiquer que la porte est ouverte
-            self.message.write_message(MESSAGES["opened door"], text_color="green")
-            self.clear_map_element(door_coord)  # Effacer la porte du plan du château
-            del self.dict_questions[door_coord]  # Supprimer la question du dictionnaire des questions
+            self._message.write_message(MESSAGES["opened door"], text_color="green")
+            self._clear_map_element(door_coord)  # Effacer la porte du plan du château
+            del self._dict_questions[door_coord]  # Supprimer la question du dictionnaire des questions
             self.goto(MAP_COORDS[door_coord][1])  # Le héros se déplace sur l'emplacement de la porte
-            self.shadow.stamp()
-            self.shadow.goto(MAP_COORDS[door_coord][1])
+            self._shadow.stamp()
+            self._shadow.goto(MAP_COORDS[door_coord][1])
         else:
             # Sinon indiquer que la réponse est fausse
-            self.message.write_message(MESSAGES["wrong"], text_color="red")
-            self.cur_position = last_position  # Le héros reprend sa position d'origine en restant bloqué devant la porte
+            self._message.write_message(MESSAGES["wrong"], text_color="red")
+            self._cur_position = last_position  # Le héros reprend sa position d'origine en restant bloqué devant la porte
 
-        self.game_window.listen()  # Continuer à récupérer les entrées clavier
+        self._game_window.listen()  # Continuer à récupérer les entrées clavier
+
+    def move_to(self) -> None:
+        """Permet de déplacer le héros avec les flèches du clavier.
+
+        Returns: None
+        """
+        self._game_window.onkeypress(self._go_up, "Up")  # Quand on appuie sur la flèche du haut, le perso monte.
+        self._game_window.onkeypress(self._go_down, "Down")  # Quand on appuie sur la flèche du bas, le perso descend.
+        self._game_window.onkeypress(self._go_left,
+                                     "Left")  # Quand on appuie sur la flèche de gauche, le perso va à gauche.
+        self._game_window.onkeypress(self._go_right,
+                                     "Right")  # Quand on appuie sur la flèche de droite, le perso va à droite.
+        self._game_window.listen()  # Récupère les entrées clavier
 
 
+# Class Game permettant de créer la dynamique du jeu afin de le lancer
 class Game:
-    def __init__(self):
-        self.screen = turtle.Screen()
-        self.screen.setup(width=1000, height=750)
-        self.screen.bgcolor(COULEUR_EXTERIEUR)
-        self.castle = Castle()
-        self.castle.draw_map()
-        self.hero = Hero(self.castle)
+    def __init__(self) -> None:
+        self._screen_turtlescreen = turtle.Screen()  # Créer une instance de la gestion de la fenêtre graphique Turtle
+        self._screen_turtlescreen.title("Pythescape")  # Titre de la fenêtre
+        self._screen_turtlescreen.setup(width=1000, height=750)  # Taille de la fenêtre
+        self._screen_turtlescreen.bgcolor(COULEUR_EXTERIEUR)  # Couleur de fond de la fenêtre
 
-    def main_loop(self):
-        self.hero.move_to()
-        self.screen.mainloop()
+        self._castle = Castle()  # Créer une instance de la class Castle
+        self._castle.draw_map()  # Dessiner le plan du château
+        self._hero = Hero(self._castle)  # Créer une instance de la class Hero à partir de l'instance castle
+
+    def _main_loop(self):
+        """Permet de lancer le jeu.
+
+        Returns: None
+        """
+        self._hero.move_to()  # Lancer la méthode de déplacement du héros
+        self._screen_turtlescreen.mainloop()  # Maintient la fenêtre Turtle ouverte
 
     def __call__(self) -> None:
-        self.main_loop()
+        self._main_loop()
+
+
+# Class Rules pour faire apparaître dans une fenêtre au démarrage du jeu les règles du jeu
+class Rules(Tk):
+    def __init__(self) -> None:
+        super().__init__()  # Créer une instance de la class Tk avec une fenêtre principale
+        self.title("Règles du Jeu Pythescape")  # Titre de la fenêtre principale
+        self._window_width = 600  # Largeur de la fenêtre
+        self._window_height = 600  # Hauteur de la fenêtre
+        self._screen_width = self.winfo_screenwidth()  # Largeur de l'écran où est lancée l'appli
+        self._screen_height = self.winfo_screenheight()  # Hauteur de l'écran où est lancée l'appli
+        self._center_x = int(
+            self._screen_width / 2 - self._window_width / 2)  # Calcul de l'abscisse du centre de l'écran
+        self._center_y = int(
+            self._screen_height / 2 - self._window_height / 2)  # Calcul de l'ordonnée du centre de l'écran
+        # Paramètres de la fenêtre principale
+        self.geometry(f"{self._window_width}x{self._window_height}+{self._center_x}+{self._center_y}")
+        self.resizable(False, False)  # Empêcher de pouvoir modifier la taille de la fenêtre
+
+        # Ajout d'un widget Label afin d'afficher les règles du jeu
+        self._game_rules = Label(self,
+                                 text=MESSAGES["rules"],
+                                 font=("Helvetica", 14),
+                                 justify=CENTER,
+                                 wraplength=500,
+                                 )
+        self._game_rules.pack(pady=30)  # Empaquetage du widget dans la fenêtre
+
+        # Ajout d'un widget Button afin d'avoir un bouton cliquable permettant de lancer le jeu
+        self._start_game_btn = ttk.Button(self, text="Ok", command=self._start_game)
+        self._start_game_btn.pack(pady=30)  # Empaquetage du widget dans la fenêtre
+
+    def _start_game(self) -> None:
+        """Permet de lancer la commande lors l'utilisation du bouton d'action.
+        Lance le jeu en cliquant sur le bouton.
+
+        Returns: None
+        """
+        self.destroy()  # Ferme la fenêtre principale avec les règles du jeu
+        Game()()  # Lance la fenêtre Turtle contenant le jeu
+
+    def __call__(self) -> None:
+        self.mainloop()
 
 
 if __name__ == '__main__':
-    Game()()
-
-
-
+    Rules()()
