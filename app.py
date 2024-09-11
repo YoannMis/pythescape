@@ -1,0 +1,3 @@
+import castle
+
+castle.Rules()()
