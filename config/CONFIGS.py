@@ -20,6 +20,6 @@ RATIO_PERSONNAGE = 0.9  # Rapport entre diamètre du personnage et dimension des
 POSITION_DEPART = (0, 1)  # Porte d'entrée du château
 
 # Désignation des fichiers de données à utiliser
-fichier_plan = 'plan_chateau.txt'
+fichier_plan = 'plan.txt'
 fichier_questions = 'dico_portes.txt'
 fichier_objets = 'dico_objets.txt'
