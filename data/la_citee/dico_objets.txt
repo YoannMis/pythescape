@@ -1,0 +1,6 @@
+(1, 15), "Statuette de chouette"
+(7, 1), "Fragment de tablette gravé du symbole 'H'"
+(11, 7), "Pièce avec le symbole Pi"
+(11, 17), "Un croquis ancien représentant un astrolabe"
+(23, 5), "Une amulette en forme de l'arbre Yggdrasil"
+(25, 1), "Une ancienne pièce d’armure recouverte d'une patine verte de cuivre"
