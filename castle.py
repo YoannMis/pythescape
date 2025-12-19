@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum, StrEnum
 from pathlib import Path
 import turtle
 
@@ -18,7 +18,7 @@ DATA_DIR = Path(__file__).resolve().parent / Paths.DATA.value
 # Chemin vers le dossier du thème choisi par le joueur
 THEME_DIR = DATA_DIR / Paths.PYTHON.value
 # Chemin vers le fichier contenant le plan du château
-CASTLE_MAP_PATH = THEME_DIR / fichier_plan
+# CASTLE_MAP_PATH = THEME_DIR / fichier_plan
 # Chemin vers le fichier contenant le plan du château
 OBJECTS_PATH = THEME_DIR / fichier_objets
 # Chemin vers le fichier contenant le plan du château
@@ -26,8 +26,8 @@ QUESTIONS_PATH = THEME_DIR / fichier_questions
 
 # ---RÉCUPÉRATION DES DONNÉES CONTENUES DANS LES FICHIERS DE DONNÉES---
 # Récupération de la liste des colonnes et lignes de la grille représentant le plan du château
-with open(CASTLE_MAP_PATH, "r") as f:
-    CASTLE_GRID = [line.strip().split(" ") for line in f.readlines()]
+# with open(CASTLE_MAP_PATH, "r") as f:
+#     CASTLE_GRID = [line.strip().split(" ") for line in f.readlines()]
 # Conversion du fichier .txt dico_objets.txt en un str au format dictionnaire :
 # {tuple(coordonnées objet): "description de l'objet"}
 with open(OBJECTS_PATH, "r") as f:
@@ -38,67 +38,93 @@ with open(QUESTIONS_PATH, "r") as f:
     QUESTIONS = "{" + f.read().replace("), ", "): ").replace("\n", ", ") + "}"
 
 # ---DIMENSIONS DE L'ESPACE DE JEU ET DU PLAN DU CHÂTEAU---
-WIDTH = abs(ZONE_PLAN_MINI[0]) + abs(ZONE_PLAN_MAXI[0])  # Hauteur de la zone d'affichage du château
-HEIGHT = abs(ZONE_PLAN_MINI[1]) + abs(ZONE_PLAN_MAXI[1])  # Largeur de la zone d'affichage du château
-ROWS = len(CASTLE_GRID)  # Nombre de lignes dans la grille
-COLUMNS = len(CASTLE_GRID[0])  # Nombre de colonnes dans la grille
-MAX_SQUARES_IN_HEIGHT = HEIGHT // ROWS  # Longueur maximale des côtés des carrés qui rentrent en hauteur
-MAX_SQUARES_IN_WIDTH = WIDTH // COLUMNS  # Longueur maximale des côtés des carrés qui rentrent en largeur
-# Longueur maximale des côtés des carrés afin qu'ils puissent rentrer en hauteur et largeur sur la grille
-SQUARE_SIDE_LEN = MAX_SQUARES_IN_HEIGHT if MAX_SQUARES_IN_HEIGHT <= MAX_SQUARES_IN_WIDTH else MAX_SQUARES_IN_WIDTH
-HALF_SQUARE = SQUARE_SIDE_LEN / 2  # moitié de la longueur du carré pour trouver le centre du carré
-DEFAULT_SHAPESIZE = 20  # nombre de px par défaut d'un objet Turtle nécessaire pour convertir la taille en px
-GRID_SHAPESIZE = SQUARE_SIDE_LEN / DEFAULT_SHAPESIZE  # Conversion en px de la taille d'un élément à afficher à l'écran
+# WIDTH = abs(ZONE_PLAN_MINI[0]) + abs(ZONE_PLAN_MAXI[0])  # Hauteur de la zone d'affichage du château
+# HEIGHT = abs(ZONE_PLAN_MINI[1]) + abs(ZONE_PLAN_MAXI[1])  # Largeur de la zone d'affichage du château
+# ROWS = len(CASTLE_GRID)  # Nombre de lignes dans la grille
+# COLUMNS = len(CASTLE_GRID[0])  # Nombre de colonnes dans la grille
+# MAX_SQUARES_IN_HEIGHT = HEIGHT // ROWS  # Longueur maximale des côtés des carrés qui rentrent en hauteur
+# MAX_SQUARES_IN_WIDTH = WIDTH // COLUMNS  # Longueur maximale des côtés des carrés qui rentrent en largeur
+# # Longueur maximale des côtés des carrés afin qu'ils puissent rentrer en hauteur et largeur sur la grille
+# SQUARE_SIDE_LEN = MAX_SQUARES_IN_HEIGHT if MAX_SQUARES_IN_HEIGHT <= MAX_SQUARES_IN_WIDTH else MAX_SQUARES_IN_WIDTH
+# HALF_SQUARE = SQUARE_SIDE_LEN / 2  # moitié de la longueur du carré pour trouver le centre du carré
+# DEFAULT_SHAPESIZE = 20  # nombre de px par défaut d'un objet Turtle nécessaire pour convertir la taille en px
+# GRID_SHAPESIZE = SQUARE_SIDE_LEN / DEFAULT_SHAPESIZE  # Conversion en px de la taille d'un élément à afficher à l'écran
 
 # ---ÉLÉMENTS DU PLAN DU CHÂTEAU---
-# Faire une classe Enum
-CORRIDOR = 0  # Couloir
-WALL = 1  # Mur
-GOAL = 2  # But/sortie
-DOOR = 3  # Porte
-OBJECT = 4  # Objet
+class Elements(IntEnum):
+    CORRIDOR = 0  # Couloir
+    WALL = 1  # Mur
+    GOAL = 2  # But/sortie
+    DOOR = 3  # Porte
+    OBJECT = 4  # Objet
 
 # ---DICT DES DIFFÉRENTS MESSAGES DU JEU À AFFICHER---
-# Faire une classe Enum
-MESSAGES = {"rules": """Lancelot entre dans le château au sommet du Python des Neiges, muni de son précieux sac de rangement et de sa torche fraîchement allumée aux feux de Beltane. 
-Il doit trouver la statue de sainte Axerror, le chef-d’oeuvre de Gide de Rome, dit le « tyran malfaisant éternel ».
 
-Heureusement, pour l’aider dans sa quête, Merlin, son maître, lui a fourni un plan minutieux des salles et des couloirs du château. 
-Ce plan lui sera fort utile, vu l’énormité du bâtiment, tant par sa taille que par le nombre de ses pièces !
-
-Avant de partir, Merlin lui a donné la clef de la porte d’entrée du château et lui a prodigué moults conseils, 
-dont celui de bien garder tous les objets qu’il trouvera lors de sa quête : 
-ceux-ci lui permettront de répondre aux diverses énigmes que ne manqueront pas de poser les gardes postés devant les portes à l’intérieur du château.
-
-Merlin a affirmé à son disciple que, s’il procède avec intelligence, sa quête sera satisfaite.""",
-            "win": "Bravo ! Vous avez gagné !",
-            "closed door": "Cette porte est fermée. Répondez à l'énigme posée par le garde pour l'ouvrir.",
-            "opened door": "La porte s'ouvre !",
-            "wrong": "Mauvaise réponse.",
-            "start": "Vous devez amener le Héros (point rouge) jusqu'à la sortie (case jaune).",
-            "object": "Vous avez trouvé un objet : ",
-            "inventory": "INVENTAIRE :",
-            }
+class Messages(StrEnum):
+    WIN = "Bravo ! Vous avez gagné !"
+    CLOSED_DOOR = "Cette porte est fermée. Répondez à l'énigme posée par le garde pour l'ouvrir."
+    OPENED_DOOR = "La porte s'ouvre !"
+    WRONG = "Mauvaise réponse."
+    START = "Vous devez amener le Héros (point rouge) jusqu'à la sortie (case jaune)."
+    OBJECT = "Vous avez trouvé un objet : "
+    INVENTORY = "INVENTAIRE :"
 
 # Dict contenant les coordonnées (sous forme de tuple) de chaque case de la grille représentant le château comme clés
 # Et un tuple (contenant le numéro correspondant à l'élément représenté par la case, les coordonnées en px Turtle de la case) comme valeurs
-MAP_COORDS = {}
-x_coord = ZONE_PLAN_MINI[
-              0] + HALF_SQUARE  # coordonnée x en px Turtle du centre de la case en haut à gauche de la grille
-y_coord = ZONE_PLAN_MAXI[
-              1] - HALF_SQUARE  # coordonnée y en px Turtle du centre de la case en haut à gauche de la grille
-for x in range(ROWS):
-    for y in range(COLUMNS):
-        # MAP_COORDS = {(x, y): (n° représentant objet, (x en px Ttle, y en px Ttle))}
-        MAP_COORDS[(x, y)] = (int(CASTLE_GRID[x][y]), (x_coord, y_coord))
-        x_coord += SQUARE_SIDE_LEN  # On passe au centre de la case de la colonne suivante
-    # On se déplace aux coordonnées du centre de la case de la ligne suivante
-    y_coord -= SQUARE_SIDE_LEN
-    x_coord = ZONE_PLAN_MINI[0] + HALF_SQUARE
+# MAP_COORDS = {}
+# x_coord = ZONE_PLAN_MINI[
+#               0] + HALF_SQUARE  # coordonnée x en px Turtle du centre de la case en haut à gauche de la grille
+# y_coord = ZONE_PLAN_MAXI[
+#               1] - HALF_SQUARE  # coordonnée y en px Turtle du centre de la case en haut à gauche de la grille
+# for x in range(ROWS):
+#     for y in range(COLUMNS):
+#         # MAP_COORDS = {(x, y): (n° représentant objet, (x en px Ttle, y en px Ttle))}
+#         MAP_COORDS[(x, y)] = (int(CASTLE_GRID[x][y]), (x_coord, y_coord))
+#         x_coord += SQUARE_SIDE_LEN  # On passe au centre de la case de la colonne suivante
+#     # On se déplace aux coordonnées du centre de la case de la ligne suivante
+#     y_coord -= SQUARE_SIDE_LEN
+#     x_coord = ZONE_PLAN_MINI[0] + HALF_SQUARE
 
 
 # Class Castle permettant d'afficher à l'écran le plan du château
 class Castle(turtle.Turtle):
+    # Chemin vers le fichier contenant le plan du château
+    CASTLE_MAP_PATH = THEME_DIR / fichier_plan
+    # ---RÉCUPÉRATION DES DONNÉES CONTENUES DANS LES FICHIERS DE DONNÉES---
+    # Récupération de la liste des colonnes et lignes de la grille représentant le plan du château
+    with open(CASTLE_MAP_PATH, "r") as f:
+        CASTLE_GRID = [line.strip().split(" ") for line in f.readlines()]
+
+    # ---DIMENSIONS DE L'ESPACE DE JEU ET DU PLAN DU CHÂTEAU---
+    WIDTH = abs(ZONE_PLAN_MINI[0]) + abs(ZONE_PLAN_MAXI[0])  # Hauteur de la zone d'affichage du château
+    HEIGHT = abs(ZONE_PLAN_MINI[1]) + abs(ZONE_PLAN_MAXI[1])  # Largeur de la zone d'affichage du château
+    ROWS = len(CASTLE_GRID)  # Nombre de lignes dans la grille
+    COLUMNS = len(CASTLE_GRID[0])  # Nombre de colonnes dans la grille
+    MAX_SQUARES_IN_HEIGHT = HEIGHT // ROWS  # Longueur maximale des côtés des carrés qui rentrent en hauteur
+    MAX_SQUARES_IN_WIDTH = WIDTH // COLUMNS  # Longueur maximale des côtés des carrés qui rentrent en largeur
+    # Longueur maximale des côtés des carrés afin qu'ils puissent rentrer en hauteur et largeur sur la grille
+    SQUARE_SIDE_LEN = MAX_SQUARES_IN_HEIGHT if MAX_SQUARES_IN_HEIGHT <= MAX_SQUARES_IN_WIDTH else MAX_SQUARES_IN_WIDTH
+    HALF_SQUARE = SQUARE_SIDE_LEN / 2  # moitié de la longueur du carré pour trouver le centre du carré
+    DEFAULT_SHAPESIZE = 20  # nombre de px par défaut d'un objet Turtle nécessaire pour convertir la taille en px
+    GRID_SHAPESIZE = SQUARE_SIDE_LEN / DEFAULT_SHAPESIZE  # Conversion en px de la taille d'un élément à afficher à l'écran
+
+    # Dict contenant les coordonnées (sous forme de tuple) de chaque case de la grille représentant le château comme clés
+    # Et un tuple (contenant le numéro correspondant à l'élément représenté par la case, les coordonnées en px Turtle de la case) comme valeurs
+    MAP_COORDS = {}
+    x_coord = ZONE_PLAN_MINI[
+                  0] + HALF_SQUARE  # coordonnée x en px Turtle du centre de la case en haut à gauche de la grille
+    y_coord = ZONE_PLAN_MAXI[
+                  1] - HALF_SQUARE  # coordonnée y en px Turtle du centre de la case en haut à gauche de la grille
+    for x in range(ROWS):
+        for y in range(COLUMNS):
+            # MAP_COORDS = {(x, y): (n° représentant objet, (x en px Ttle, y en px Ttle))}
+            MAP_COORDS[(x, y)] = (int(CASTLE_GRID[x][y]), (x_coord, y_coord))
+            x_coord += SQUARE_SIDE_LEN  # On passe au centre de la case de la colonne suivante
+        # On se déplace aux coordonnées du centre de la case de la ligne suivante
+        y_coord -= SQUARE_SIDE_LEN
+        x_coord = ZONE_PLAN_MINI[0] + HALF_SQUARE
+
+
     def __init__(self) -> None:
         super().__init__()  # Héritage de la Class Turtle
         self.hideturtle()  # Cacher la tortue au démarrage du jeu

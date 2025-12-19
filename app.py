@@ -107,9 +107,6 @@ class Frames(Frame):
             self._game_rules.destroy()
             self._dropbox.destroy()
             self._choose_theme_btn.destroy()
-            # frame.destroy()  # Ferme la fenêtre principale avec les règles du jeu
-            # rules = Frames(root, label_msg=Prints.RULES.value, choose=False)
-            # rules.pack()
             rules = Label(self,
                           text=Prints.RULES.value,
                           font=("Helvetica", 14),
